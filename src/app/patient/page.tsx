@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, getDocs, limit, where } from "firebase/firestore";
 import { db } from "../../firebase";
 
@@ -12,9 +13,13 @@ type Patient = {
   name: string;
   type: "Online" | "Walk-in";
   status: "current" | "next" | "delayed" | "completed";
+  clinicId: string;
 };
 
-export default function PatientPage() {
+function PatientContent() {
+  const searchParams = useSearchParams();
+  const clinicId = searchParams.get("clinicId") || "default";
+
   const [name, setName] = useState("");
   const [joined, setJoined] = useState(false);
   const [myDocId, setMyDocId] = useState<string | null>(null);
@@ -74,6 +79,7 @@ export default function PatientPage() {
         name: name.trim(),
         type: "Online",
         status: initialStatus,
+        clinicId: clinicId, // Store the clinic ID
         createdAt: serverTimestamp(),
       });
       
@@ -150,7 +156,9 @@ export default function PatientPage() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
         <div>
           <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">Patient View</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">Track your position in the clinic queue</p>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            {clinicId !== "default" ? `Clinic ID: ${clinicId}` : "Track your position in the clinic queue"}
+          </p>
         </div>
 
         {!joined || !myData ? (
@@ -231,5 +239,13 @@ export default function PatientPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PatientPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading app...</div>}>
+      <PatientContent />
+    </Suspense>
   );
 }

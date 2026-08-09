@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, getDocs, limit, where } from "firebase/firestore";
 import { db } from "../../firebase";
+import QRCode from "react-qr-code";
 
 type Patient = {
   id: string;
@@ -18,6 +19,13 @@ export default function AttendantPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [newWalkInName, setNewWalkInName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+  }, []);
 
   // Listen to active queue
   useEffect(() => {
@@ -133,7 +141,7 @@ export default function AttendantPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left Column: Current Patient & Add Walk-in */}
+          {/* Left Column: Current Patient & Add Walk-in & QR Code */}
           <div className="md:col-span-1 space-y-6">
             
             {/* Current Patient Card */}
@@ -159,6 +167,19 @@ export default function AttendantPage() {
                   No active patient
                 </div>
               )}
+            </div>
+
+            {/* Scan to Join Queue */}
+            <div className="bg-white p-6 rounded-2xl shadow-md flex flex-col items-center">
+              <h3 className="text-sm uppercase tracking-wide text-gray-500 font-bold mb-4">Scan to Join Queue</h3>
+              {origin ? (
+                <div className="p-4 bg-white border-2 border-gray-100 rounded-xl">
+                  <QRCode value={`${origin}/patient?clinicId=default`} size={150} />
+                </div>
+              ) : (
+                <div className="w-[150px] h-[150px] bg-gray-100 animate-pulse rounded-xl" />
+              )}
+              <p className="text-xs text-center text-gray-400 mt-4">Scan with phone camera</p>
             </div>
 
             {/* Add Walk-in */}
@@ -189,7 +210,7 @@ export default function AttendantPage() {
             <div className="px-6 py-5 border-b border-gray-200 bg-gray-50">
               <h3 className="text-lg leading-6 font-semibold text-gray-900">Queue List</h3>
             </div>
-            <ul className="divide-y divide-gray-200 overflow-y-auto flex-1 max-h-[600px]">
+            <ul className="divide-y divide-gray-200 overflow-y-auto flex-1 max-h-[750px]">
               {patients.map((p) => (
                 <li key={p.id} className={`p-6 hover:bg-gray-50 transition-colors ${p.status === "current" ? "bg-blue-50/50" : ""}`}>
                   <div className="flex items-center justify-between">
